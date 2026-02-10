@@ -232,7 +232,7 @@ SPAWN_FOLDER.ChildAdded:Connect(function(br)
 end)
 
 BrainrotsSection:Button({
-    Title = "AMBIL 1x BRAINROT",
+    Title = "Tp Brainrots",
     Callback = function()
         if Running then return end
         Running = true
