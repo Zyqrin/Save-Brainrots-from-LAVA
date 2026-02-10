@@ -1,0 +1,403 @@
+--==================================================
+-- SERVICES
+--==================================================
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+--==================================================
+-- PLAYER SETUP + RESPAWN FIX
+--==================================================
+local LP = Players.LocalPlayer
+local Char, HRP
+
+local function SetupChar()
+    Char = LP.Character or LP.CharacterAdded:Wait()
+    HRP = Char:WaitForChild("HumanoidRootPart")
+end
+SetupChar()
+LP.CharacterAdded:Connect(SetupChar)
+
+--==================================================
+-- WIND UI (LOAD SEKALI)
+--==================================================
+local WindUI = loadstring(game:HttpGet(
+    "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
+))()
+
+local Window = WindUI:CreateWindow({
+    Title = "Zyqrin Hub || SBFL",
+    Icon = "rbxassetid://73349555895759",
+    Author = "by zyqrin",
+    KeySystem = {                                                   
+        Note = "Example Key System. With platoboost.",              
+        API = {                                                     
+            { -- PlatoBoost
+                Type = "platoboost",                                
+                ServiceId = 19724, -- service id
+                Secret = "7065f5da-64e9-4933-b1ae-f920906e66d0", -- platoboost secret
+            },                                                      
+        },                                                          
+    },                                                              
+})
+
+Window:Tag({
+    Title = "v1.0",
+    Icon = "rocket",
+    Color = Color3.fromHex("#30ff6a"),
+    Radius = 13,
+})
+
+local InfoTab = Window:Tab({
+    Title = "Info",
+    Icon = "info",
+})
+
+-- HEADER (JUDUL + LOGO)
+InfoTab:Paragraph({
+    Title = "Zyqrin Key Premium",
+    Desc = "Buy Key Premium All Game",
+    Image = "rbxassetid://73349555895759",
+    ImageSize = 48,
+})
+
+-- INFO BOX (TEXT SEPERTI GAMBAR)
+InfoTab:Paragraph({
+    Title = "List Script",
+    Desc = [[
+• Survive LAVA for Brainrots
+• Escape Tsunami For Brainrots!
+• Save Brainrots from LAVA
+
+Join Discord untuk buy key Premium all game
+]],
+})
+
+-- COPY DISCORD BUTTON
+InfoTab:Button({
+    Title = "COPY LINK DISCORD",
+    Desc = "Salin link Discord Zyqrin",
+    Icon = "copy",
+    Callback = function()
+        pcall(function()
+            setclipboard("https://discord.gg/tHh4xbCsTQ")
+        end)
+
+        WindUI:Notify({
+            Title = "Discord",
+            Content = "Link Discord berhasil di-copy!",
+            Duration = 2
+        })
+    end
+})
+
+
+
+--##################################################
+-- TAB 1 : BRAINROT TP MANUAL
+--##################################################
+local MainTab = Window:Tab({
+    Title = "Main",
+    Icon = "rocket",
+})
+
+local BrainrotsSection = MainTab:Section({ Title = "BRAINROTS", Box = true, Opened = false })
+
+local PresentSection = MainTab:Section({ Title = "PRESENT", Box = true, Opened = false })
+
+local Busy = false
+local BASE_CF = CFrame.new(59.8, 23.0, 43.4)
+local ReturnSpeed_Tab1 = 60
+local SelectedVariant = nil
+
+local function GetVariants()
+    local list = {}
+    if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Brainrots") then
+        for _, v in pairs(workspace.Map.Brainrots:GetChildren()) do
+            table.insert(list, v.Name)
+        end
+    end
+    return list
+end
+
+PresentSection:Dropdown({
+    Title = "Variant Present",
+    Desc = "Pilih Present",
+    Values = GetVariants(),
+    AllowNone = true,
+    Callback = function(v)
+        SelectedVariant = v
+    end
+})
+
+PresentSection:Button({
+    Title = "Refresh Present",
+    Callback = function()
+        VariantDropdown:SetValues(GetVariants())
+    end
+})
+
+PresentSection:Button({
+    Title = "TP Present",
+    Desc = "Tp Instan Present",
+    Callback = function()
+        if Busy or not SelectedVariant then return end
+        local brainrot = workspace.Map.Brainrots:FindFirstChild(SelectedVariant)
+        if brainrot then
+            local part = brainrot:FindFirstChildWhichIsA("BasePart", true)
+            if part then
+                Busy = true
+                HRP.CFrame = part.CFrame * CFrame.new(0,3,0)
+                task.delay(0.5, function() Busy = false end)
+            end
+        end
+    end
+})
+
+
+PresentSection:Button({
+    Title = "TP Base",
+    Desc = "Teleport Base",
+    Callback = function()
+        if Busy then return end
+        Busy = true
+        local dist = (HRP.Position - BASE_CF.Position).Magnitude
+        local time = dist / ReturnSpeed_Tab1
+        TweenService:Create(
+            HRP,
+            TweenInfo.new(time, Enum.EasingStyle.Linear),
+            {CFrame = BASE_CF}
+        ):Play()
+        task.delay(time,function() Busy=false end)
+    end
+})
+
+PresentSection:Input({
+    Title = "Speed TP Base",
+    Desc = "Sesuaikan Dengan Speed",
+    Placeholder = "contoh: 100",
+    Callback = function(v)
+        local n = tonumber(v)
+        if n then ReturnSpeed_Tab1 = math.clamp(n,10,300) end
+    end
+})
+
+
+
+local SPAWN_FOLDER = workspace.Map.SpawnedBrainrots
+local RETURN_CFRAME = BASE_CF
+local Running = false
+local SelectedBrainrot = nil
+local BrainrotList = {}
+local ReturnSpeed_Tab2 = 0.8
+
+local function RefreshBrainrotList()
+    BrainrotList = {}
+    for _,b in pairs(SPAWN_FOLDER:GetChildren()) do
+        if not table.find(BrainrotList,b.Name) then
+            table.insert(BrainrotList,b.Name)
+        end
+    end
+end
+RefreshBrainrotList()
+
+local function TPInstant(cf)
+    HRP.CFrame = cf + Vector3.new(0,3,0)
+end
+
+local function TPSmooth(cf)
+    TweenService:Create(
+        HRP,
+        TweenInfo.new(ReturnSpeed_Tab2,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),
+        {CFrame = cf + Vector3.new(0,3,0)}
+    ):Play()
+end
+
+local function HandleBrainrot(br)
+    if not Running or br.Name ~= SelectedBrainrot then return end
+    local root = br:FindFirstChild("RootPart")
+    if not root then return end
+    TPInstant(root.CFrame)
+    task.wait(0.2)
+    local p = root:FindFirstChildOfClass("ProximityPrompt")
+    if p then fireproximityprompt(p) end
+    task.wait(0.2)
+    TPSmooth(RETURN_CFRAME)
+    Running = false
+end
+
+SPAWN_FOLDER.ChildAdded:Connect(function(br)
+    task.wait(0.3)
+    HandleBrainrot(br)
+end)
+
+BrainrotsSection:Button({
+    Title = "AMBIL 1x BRAINROT",
+    Callback = function()
+        if Running then return end
+        Running = true
+        for _,b in pairs(SPAWN_FOLDER:GetChildren()) do
+            HandleBrainrot(b)
+        end
+    end
+})
+
+BrainrotsSection:Dropdown({
+    Title = "Variant Brainrot",
+    Values = BrainrotList,
+    AllowNone = true,
+    Callback = function(v) SelectedBrainrot = v end
+})
+
+BrainrotsSection:Button({
+    Title = "Refresh Brainrots",
+    Callback = function()
+        RefreshBrainrotList()
+        BrainrotDropdown:Refresh(BrainrotList)
+    end
+})
+
+BrainrotsSection:Input({
+    Title = "Speed TP Base",
+    Desc = "Sesuaikan Dengan Speed",
+    Placeholder = "0.1 - 5",
+    Callback = function(v)
+        local n = tonumber(v)
+        if n then ReturnSpeed_Tab2 = math.clamp(n,0.1,5) end
+    end
+})
+
+--##################################################
+-- TAB 3 : PLATFORM AUTOMATION (BARU)
+--##################################################
+local ShopTab = Window:Tab({
+    Title = "Shop",
+    Icon = "tool-case",
+})
+
+local BuySection = ShopTab:Section({ Title = "BUY", Box = true, Opened = false })
+
+local SellSection = ShopTab:Section({ Title = "SELL", Box = true, Opened = false })
+
+local RebirthSection = ShopTab:Section({ Title = "REBIRTH", Box = true, Opened = false })
+
+
+
+local Events = ReplicatedStorage.Events
+local AutoCollect,AutoUpgrade,AutoSpeed,AutoCarry,AutoSell,AutoRebirth = false,false,false,false,false,false
+local SelectedSpeed = "Speed1"
+
+task.spawn(function()
+    while true do
+        if AutoCollect then
+            for i=1,30 do pcall(function() Events.Collect:FireServer("Platform"..i) end) task.wait(0.15) end
+        end
+        task.wait(0.3)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if AutoUpgrade then
+            for i=1,30 do pcall(function() Events.Upgrade:FireServer("Platform"..i) end) task.wait(0.2) end
+        end
+        task.wait(0.3)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if AutoSpeed then pcall(function() Events.SpeedEvent:FireServer(SelectedSpeed) end) end
+        task.wait(0.5)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if AutoCarry then pcall(function() Events.CarryEvent:FireServer() end) end
+        task.wait(0.5)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if AutoSell then pcall(function() Events.Sell:FireServer("SellAll") end) end
+        task.wait(0.6)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if AutoRebirth then pcall(function() Events.Rebirth:FireServer() end) end
+        task.wait(3)
+    end
+end)
+
+BuySection:Dropdown({
+    Title = "Speed Variant",
+    Desc = "Pilih Speed",
+    Values = { "Speed1", "Speed5", "Speed10" },
+    Value = SelectedSpeed,
+    Multi = false,
+    AllowNone = false,
+    Callback = function(v)
+        SelectedSpeed = v
+    end
+})
+
+BuySection:Toggle({
+    Title = "Auto Buy Speed",
+    Default = false,
+    Callback = function(v)
+        AutoSpeed = v
+    end
+})
+
+BuySection:Toggle({
+    Title = "Auto Buy Carry",
+    Default = false,
+    Callback = function(v)
+        AutoCarry = v
+    end
+})
+
+SellSection:Toggle({
+    Title = "Auto Sell (Sell All)",
+    Default = false,
+    Callback = function(v)
+        AutoSell = v
+    end
+})
+
+RebirthSection:Toggle({
+    Title = "Auto Rebirth",
+    Default = false,
+    Callback = function(v)
+        AutoRebirth = v
+    end
+})
+
+local BaseTab = Window:Tab({
+    Title = "Base",
+    Icon = "house-plus",
+})
+
+local BaseSection = BaseTab:Section({ Title = "BASE", Box = true, Opened = false })
+
+
+BaseSection:Toggle({
+    Title = "Auto Collect",
+    Default = false,
+    Callback = function(v)
+        AutoCollect = v
+    end
+})
+
+BaseSection:Toggle({
+    Title = "Auto Upgrade",
+    Default = false,
+    Callback = function(v)
+        AutoUpgrade = v
+    end
+})
+
