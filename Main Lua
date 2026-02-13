@@ -119,7 +119,6 @@ local Busy = false
 -- SPEED INPUT
 PresentSection:Input({
     Title = "Speed TP Base",
-    Desc = "10 - 300",
     Placeholder = "80",
     Callback = function(v)
         local n = tonumber(v)
@@ -132,7 +131,6 @@ PresentSection:Input({
 -- TP PRESENT
 PresentSection:Button({
     Title = "TP Present",
-    Desc = "Teleport ke present",
     Callback = function()
 
         if Busy then return end
@@ -148,7 +146,6 @@ PresentSection:Button({
 -- TP BASE HALUS
 PresentSection:Button({
     Title = "TP Base",
-    Desc = "Teleport halus ke base",
     Callback = function()
 
         if Busy then return end
