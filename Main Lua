@@ -107,83 +107,67 @@ local BrainrotsSection = MainTab:Section({ Title = "BRAINROTS", Box = true, Open
 
 local PresentSection = MainTab:Section({ Title = "PRESENT", Box = true, Opened = false })
 
+--==================================================
+-- PRESENT FIXED TP
+--==================================================
+
+local PRESENT_CF = CFrame.new(5.3,52.0,-1736.6)
+local BASE_CF = CFrame.new(59.8,23,43.4)
+local Speed = 80
 local Busy = false
-local BASE_CF = CFrame.new(59.8, 23.0, 43.4)
-local ReturnSpeed_Tab1 = 60
-local SelectedVariant = nil
 
-local function GetVariants()
-    local list = {}
-    if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Brainrots") then
-        for _, v in pairs(workspace.Map.Brainrots:GetChildren()) do
-            table.insert(list, v.Name)
-        end
-    end
-    return list
-end
-
-PresentSection:Dropdown({
-    Title = "Variant Present",
-    Desc = "Pilih Present",
-    Values = GetVariants(),
-    AllowNone = true,
-    Callback = function(v)
-        SelectedVariant = v
-    end
-})
-
-PresentSection:Button({
-    Title = "Refresh Present",
-    Callback = function()
-        VariantDropdown:SetValues(GetVariants())
-    end
-})
-
-PresentSection:Button({
-    Title = "TP Present",
-    Desc = "Tp Instan Present",
-    Callback = function()
-        if Busy or not SelectedVariant then return end
-        local brainrot = workspace.Map.Brainrots:FindFirstChild(SelectedVariant)
-        if brainrot then
-            local part = brainrot:FindFirstChildWhichIsA("BasePart", true)
-            if part then
-                Busy = true
-                HRP.CFrame = part.CFrame * CFrame.new(0,3,0)
-                task.delay(0.5, function() Busy = false end)
-            end
-        end
-    end
-})
-
-
-PresentSection:Button({
-    Title = "TP Base",
-    Desc = "Teleport Base",
-    Callback = function()
-        if Busy then return end
-        Busy = true
-        local dist = (HRP.Position - BASE_CF.Position).Magnitude
-        local time = dist / ReturnSpeed_Tab1
-        TweenService:Create(
-            HRP,
-            TweenInfo.new(time, Enum.EasingStyle.Linear),
-            {CFrame = BASE_CF}
-        ):Play()
-        task.delay(time,function() Busy=false end)
-    end
-})
-
+-- SPEED INPUT
 PresentSection:Input({
     Title = "Speed TP Base",
-    Desc = "Sesuaikan Dengan Speed",
-    Placeholder = "contoh: 100",
+    Desc = "10 - 300",
+    Placeholder = "80",
     Callback = function(v)
         local n = tonumber(v)
-        if n then ReturnSpeed_Tab1 = math.clamp(n,10,300) end
+        if n then
+            Speed = math.clamp(n,10,300)
+        end
     end
 })
 
+-- TP PRESENT
+PresentSection:Button({
+    Title = "TP Present",
+    Desc = "Teleport ke present",
+    Callback = function()
+
+        if Busy then return end
+        Busy = true
+
+        Char:PivotTo(PRESENT_CF)
+
+        task.wait(.3)
+        Busy=false
+    end
+})
+
+-- TP BASE HALUS
+PresentSection:Button({
+    Title = "TP Base",
+    Desc = "Teleport halus ke base",
+    Callback = function()
+
+        if Busy then return end
+        Busy = true
+
+        local dist = (HRP.Position - BASE_CF.Position).Magnitude
+        local time = dist / Speed
+
+        TweenService:Create(
+            HRP,
+            TweenInfo.new(time,Enum.EasingStyle.Linear),
+            {CFrame = BASE_CF}
+        ):Play()
+
+        task.delay(time,function()
+            Busy=false
+        end)
+    end
+})
 
 
 local SPAWN_FOLDER = workspace.Map.SpawnedBrainrots
